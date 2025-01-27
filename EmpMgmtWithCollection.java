@@ -7,7 +7,7 @@ class CEO extends Employee {
     private static CEO instance = null;
 
     private CEO(int eid) {
-	super(eid, 200000, "CEO");
+        super(eid, 200000, "CEO");
     }
 
     public static CEO getInstance(int eid) {
@@ -24,12 +24,6 @@ class CEO extends Employee {
     public void raiseSalary() {
         salary += 30000;
     }
-
-    //public void display() {
-    //    System.out.println("Employee Id: " + eid);
-    //    System.out.println("Employee designation: " + designation);
-    //    System.out.println("Employee salary: " + salary);
-    //}
 }
 
 // Abstract Employee Class
@@ -57,7 +51,7 @@ abstract class Employee {
         } while (!isValidName);
         this.name = inputName;
 
-        int inputAge, minAge = 21, maxAge = 60;
+        int inputAge;
         boolean isValidAge;
         do {
             System.out.println("Enter age: ");
@@ -83,31 +77,29 @@ abstract class Employee {
         System.out.println("Employee designation: " + designation);
     }
 
-    public static int deleteEmp(Employee emp[], int size) {
-	    Scanner sc = new Scanner(System.in);
-	    int id = IdCheck.validateId(emp, size);	    
+    public static void deleteEmp(Map<Integer, Employee> empMap, int id) {
+        if (empMap.containsKey(id)) {
+            empMap.get(id).display();
+            System.out.print("Do you want to delete this employee? (Y/N): ");
+            char ch = new Scanner(System.in).next().charAt(0);
 
-	    for (int i = 0; i < size; i++) {
-	        if (emp[i].eid == id) {
-	            emp[i].display();  
-	            System.out.print("Do you want to delete this employee? (Y/N): ");
-	            char ch = sc.next().charAt(0);
+            if (ch == 'Y' || ch == 'y') {
+                empMap.remove(id);
+                System.out.println("Employee with ID " + id + " deleted.");
+            } else {
+                System.out.println("Employee deletion canceled.");
+            }
+        } else {
+            System.out.println("No employee found with ID " + id);
+        }
+    }
 
-	            if (ch == 'Y' || ch == 'y') {
-	                for (int j = i; j < size - 1; j++) {
-	                    emp[j] = emp[j + 1];  
-	                }
-	
-	                emp[size - 1] = null;  
-	                System.out.println("Employee with ID " + id + " deleted.");
-	                return size - 1;
-	            } else {
-	                System.out.println("Employee deletion canceled.");
-	                return size;  
-	            }
-	        }
-	    }
-	    return size;
+    public static void searchEmployee(Map<Integer, Employee> empMap, int id) {
+        if (empMap.containsKey(id)) {
+            empMap.get(id).display();
+        } else {
+            System.out.println("No employee found with ID " + id);
+        }
     }
 
     public abstract void raiseSalary();
@@ -119,9 +111,8 @@ final class Clerk extends Employee {
         super(eid, 20000, "Clerk");
     }
 
-    public static Clerk getClerk(int eid)
-    {
-	return new Clerk(eid);
+    public static Clerk getClerk(int eid) {
+        return new Clerk(eid);
     }
 
     public void raiseSalary() {
@@ -134,9 +125,8 @@ final class Programmer extends Employee {
         super(eid, 30000, "Programmer");
     }
 
-    public static Programmer getProgrammer(int eid)
-    {
-	return new Programmer(eid);
+    public static Programmer getProgrammer(int eid) {
+        return new Programmer(eid);
     }
 
     public void raiseSalary() {
@@ -149,9 +139,8 @@ final class Manager extends Employee {
         super(eid, 100000, "Manager");
     }
 
-    public static Manager getManager(int eid)
-    {
-	return new Manager(eid);
+    public static Manager getManager(int eid) {
+        return new Manager(eid);
     }
 
     public void raiseSalary() {
@@ -164,7 +153,7 @@ abstract class EmployeeFactory {
     private static CEO ceoInstance = null;
 
     public static Employee createEmployee(int eid, String designation) throws Exception {
-	if (designation.equals("CEO")) {
+        if (designation.equals("CEO")) {
             if (ceoInstance != null) {
                 System.out.println("CEO already exists!");
                 return null;
@@ -190,14 +179,11 @@ abstract class EmployeeFactory {
     }
 }
 
-public class DesignPatterns {
-    static Employee[] emp = new Employee[100];
-    static int pt = 0;
-    static int employeeCount = 0;
-    static int nextEid = 1;
+public class EmpMgmtWithCollection {
+    static Map<Integer, Employee> empMap = new HashMap<>();
+    static Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
         int ch1, ch2;
 
         do {
@@ -206,9 +192,10 @@ public class DesignPatterns {
             System.out.println("2. Display Employees");
             System.out.println("3. Raise Salary");
             System.out.println("4. Delete Employee");
-            System.out.println("5. Exit");
+            System.out.println("5. Search Employee");
+            System.out.println("6. Exit");
 
-            ch1 = Menu.readChoice(5);
+            ch1 = Menu.readChoice(6);
 
             switch (ch1) {
                 case 1:
@@ -224,26 +211,28 @@ public class DesignPatterns {
 
                         try {
                             String[] employeeTypes = {"Clerk", "Programmer", "Manager", "CEO"};
-			
-			    if (pt == 0 && ch2 == 4) {
-                                emp[pt] = EmployeeFactory.createEmployee(nextEid, "CEO");
-                                nextEid++;
-                                pt++;
-                                employeeCount++;
+
+                            if (ch2 >= 1 && ch2 <= 4) {
+                                System.out.print("Enter Employee ID: ");
+                                int eid = sc.nextInt();
+
+                                if (empMap.containsKey(eid)) {
+                                    System.out.println("Employee ID already exists!");
+                                    continue;
+                                }
+
+                                String employeeType = employeeTypes[ch2 - 1];
+                                Employee emp = EmployeeFactory.createEmployee(eid, employeeType);
+
+                                if (emp != null) {
+                                    empMap.put(eid, emp);
+                                    System.out.println("Employee created successfully.");
+                                }
+                            } else if (ch2 == 5) {
+                                break;
+                            } else {
+                                System.out.println("Invalid choice. Please try again.");
                             }
-			    else if (ch2 >= 1 && ch2 <= 3) {
-			        String employeeType = employeeTypes[ch2 - 1];  
-			        emp[pt] = EmployeeFactory.createEmployee(nextEid, employeeType);  
-			        nextEid++;  
-			        pt++;  
-			        employeeCount++;  
-			    } 	else if(ch2 == 4) {
-				System.out.println("CEO already exists!");
-			    }	else if (ch2 == 5) {
-			        break;
-			    } else {
-			        System.out.println("Invalid choice. Please try again.");
-			    }
                         } catch (Exception e) {
                             System.out.println(e.getMessage());
                         }
@@ -251,48 +240,47 @@ public class DesignPatterns {
                     } while (ch2 != 5);
                     break;
                 case 2:
-                    if (employeeCount == 0) {
-	        	System.out.println("No employees to display.");
-		    } 
-		    else {
-        		for (int i = 0; i < pt; i++) {
-        	    		if (emp[i] != null) {
-        	        		emp[i].display();
-        	        		System.out.println("--------------------------------");
-        	    		}
-        		}
-    		    }
+                    if (empMap.isEmpty()) {
+                        System.out.println("No employees to display.");
+                    } else {
+                        Iterator<Employee> iterator = empMap.values().iterator();
+                        while (iterator.hasNext()) {
+                            Employee emp = iterator.next();
+                            emp.display();
+                            System.out.println("--------------------------------");
+                        }
+                    }
                     break;
                 case 3:
-                    if (employeeCount == 0) {
+                    if (empMap.isEmpty()) {
                         System.out.println("No employees to update salary.");
                     } else {
-                        for (int i = 0; i < pt; i++) {
-			    if(emp[i] != null) {
-                            	emp[i].raiseSalary();
-                            	emp[i].display();
-                            	System.out.println("--------------------------------");
-			    }
+                        Iterator<Employee> iterator = empMap.values().iterator();
+                        while (iterator.hasNext()) {
+                            Employee emp = iterator.next();
+                            emp.raiseSalary();
+                            emp.display();
+                            System.out.println("--------------------------------");
                         }
                     }
                     break;
                 case 4:
-                    int empCtOld = employeeCount;
-                    employeeCount = Employee.deleteEmp(emp, employeeCount);
-                    if (empCtOld != employeeCount) {
-                        pt--;
-                    }
+                    System.out.print("Enter the employee ID to delete: ");
+                    int deleteId = sc.nextInt();
+                    Employee.deleteEmp(empMap, deleteId);
                     break;
                 case 5:
-                    System.out.println("Number of employees created: " + employeeCount);
+                    System.out.print("Enter the employee ID to search: ");
+                    int searchId = sc.nextInt();
+                    Employee.searchEmployee(empMap, searchId);
+                    break;
+                case 6:
                     System.out.println("Exiting program.");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        } while (ch1 != 5);
-
-        sc.close();
+        } while (ch1 != 6);
     }
 }
 
@@ -336,32 +324,6 @@ class NameCheck {
     }
 }
 
-class IdCheck{
-	public static int validateId(Employee emp[], int size){
-	    Scanner sc = new Scanner(System.in);
-	    int id = -1;
-	    while (true) {
-	    	System.out.println("Enter the employee id of the employee to be deleted:");
-	        id = sc.nextInt();
-        
-	        boolean idExists = false;
-	        for (int i = 0; i < size; i++) {	
-	            if (emp[i] != null && emp[i].eid == id) {
-			idExists = true;
-	                break;
-	            }
-	        }
-
-	        if (!idExists) {
-	            System.out.println("Not valid id. Please enter a valid employee ID.");
-	        } else {
-	            break;
-	        }
-	    }
-	    return id;
-	}
-}
-
 class AgeException extends Exception {
     public AgeException() {
         super();
@@ -382,6 +344,6 @@ class InvalidChoiceException extends RuntimeException {
     }
 
     public void displayMessage(int maxChoice) {
-        System.out.println("Please enter choice between 1 and " + maxChoice);
+        System.out.println("Enter valid choice between 1 and " + maxChoice);
     }
 }
